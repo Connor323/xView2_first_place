@@ -40,18 +40,11 @@ import gc
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
 
-train_dirs = ['train', 'tier3']
-
 models_folder = 'weights'
 
-input_shape = (736, 736)
+input_shape = (256, 256)
 
-
-all_files = []
-for d in train_dirs:
-    for f in sorted(listdir(path.join(d, 'images'))):
-        if '_pre_disaster.png' in f:
-            all_files.append(path.join(d, 'images', f))
+all_files = get_files()
 
 
 class TrainData(Dataset):
@@ -73,7 +66,7 @@ class TrainData(Dataset):
         if random.random() > 0.985:
             img = cv2.imread(fn.replace('_pre_disaster', '_post_disaster'), cv2.IMREAD_COLOR)
 
-        msk0 = cv2.imread(fn.replace('/images/', '/masks/'), cv2.IMREAD_UNCHANGED)
+        msk0 = cv2.imread(fn.replace('/images/', '/masks/').replace('jpg', 'png'), cv2.IMREAD_UNCHANGED)
 
         if random.random() > 0.5:
             img = img[::-1, ...]
@@ -100,7 +93,7 @@ class TrainData(Dataset):
 
         crop_size = input_shape[0]
         if random.random() > 0.3:
-            crop_size = random.randint(int(input_shape[0] / 1.2), int(input_shape[0] / 0.8))
+            crop_size = random.randint(int(input_shape[0] / 1.2), int(input_shape[0]))
 
         bst_x0 = random.randint(0, img.shape[1] - crop_size)
         bst_y0 = random.randint(0, img.shape[0] - crop_size)
@@ -176,7 +169,7 @@ class ValData(Dataset):
 
         img = cv2.imread(fn, cv2.IMREAD_COLOR)
 
-        msk0 = cv2.imread(fn.replace('/images/', '/masks/'), cv2.IMREAD_UNCHANGED)
+        msk0 = cv2.imread(fn.replace('/images/', '/masks/').replace('jpg', 'png'), cv2.IMREAD_UNCHANGED)
 
         msk = msk0[..., np.newaxis]
 
@@ -276,10 +269,10 @@ if __name__ == '__main__':
     makedirs(models_folder, exist_ok=True)
     
     seed = int(sys.argv[1])
-    # vis_dev = sys.argv[2]
+    vis_dev = sys.argv[2]
 
     # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-    # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
+    os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
 
     cudnn.benchmark = True
 

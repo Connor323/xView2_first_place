@@ -1,5 +1,7 @@
 import numpy as np
 import cv2
+import os
+from os import path as osp 
 
 #### Augmentations
 def shift_image(img, shift_pnt):
@@ -171,3 +173,11 @@ def iou(im1, im2, empty_score=1.0):
     intersection = np.logical_and(im1, im2)
 
     return intersection.sum() / im_sum
+
+def get_files():
+    root = "/pub1/hao66/dataset/xView2-patch"
+    all_files = []
+    for f in sorted(os.listdir(osp.join(root, 'images'))):
+        if '_pre_disaster' in f:
+            all_files.append(osp.join(root, 'images', f))
+    return all_files

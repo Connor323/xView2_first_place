@@ -44,21 +44,13 @@ import gc
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
 
-train_dirs = ['train', 'tier3']
-
 models_folder = 'weights'
 
 loc_folder = 'pred_loc_val'
 
-input_shape = (512, 512)
+input_shape = (256, 256)
 
-
-all_files = []
-for d in train_dirs:
-    for f in sorted(listdir(path.join(d, 'images'))):
-        if '_pre_disaster.png' in f:
-            all_files.append(path.join(d, 'images', f))
-train_len = len(all_files)
+all_files = get_files()
 
 
 class TrainData(Dataset):
@@ -78,8 +70,8 @@ class TrainData(Dataset):
         img = cv2.imread(fn, cv2.IMREAD_COLOR)
         img2 = cv2.imread(fn.replace('_pre_', '_post_'), cv2.IMREAD_COLOR)
 
-        msk0 = cv2.imread(fn.replace('/images/', '/masks/'), cv2.IMREAD_UNCHANGED)
-        lbl_msk1 = cv2.imread(fn.replace('/images/', '/masks/').replace('_pre_disaster', '_post_disaster'), cv2.IMREAD_UNCHANGED)
+        msk0 = cv2.imread(fn.replace('/images/', '/masks/').replace("jpg", "png"), cv2.IMREAD_UNCHANGED)
+        lbl_msk1 = cv2.imread(fn.replace('/images/', '/masks/').replace('_pre_disaster', '_change').replace("jpg", "png"), cv2.IMREAD_UNCHANGED)
 
         msk1 = np.zeros_like(lbl_msk1)
         msk2 = np.zeros_like(lbl_msk1)
@@ -135,7 +127,7 @@ class TrainData(Dataset):
 
         crop_size = input_shape[0]
         if random.random() > 0.5:
-            crop_size = random.randint(int(input_shape[0] / 1.1), int(input_shape[0] / 0.9))
+            crop_size = random.randint(int(input_shape[0] / 1.1), int(input_shape[0]))
 
         bst_x0 = random.randint(0, img.shape[1] - crop_size)
         bst_y0 = random.randint(0, img.shape[0] - crop_size)
@@ -267,8 +259,8 @@ class ValData(Dataset):
         img = cv2.imread(fn, cv2.IMREAD_COLOR)
         img2 = cv2.imread(fn.replace('_pre_', '_post_'), cv2.IMREAD_COLOR)
 
-        msk0 = cv2.imread(fn.replace('/images/', '/masks/'), cv2.IMREAD_UNCHANGED)
-        lbl_msk1 = cv2.imread(fn.replace('/images/', '/masks/').replace('_pre_disaster', '_post_disaster'), cv2.IMREAD_UNCHANGED)
+        msk0 = cv2.imread(fn.replace('/images/', '/masks/').replace("jpg", "png"), cv2.IMREAD_UNCHANGED)
+        lbl_msk1 = cv2.imread(fn.replace('/images/', '/masks/').replace('_pre_disaster', '_change').replace("jpg", "png"), cv2.IMREAD_UNCHANGED)
         msk_loc = cv2.imread(path.join(loc_folder, '{0}.png'.format(fn.split('/')[-1].replace('.png', '_part1.png'))), cv2.IMREAD_UNCHANGED) > (0.3*255)
         
         msk1 = np.zeros_like(lbl_msk1)
@@ -423,10 +415,10 @@ if __name__ == '__main__':
     makedirs(models_folder, exist_ok=True)
     
     seed = int(sys.argv[1])
-    # vis_dev = sys.argv[2]
+    vis_dev = sys.argv[2]
 
     # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-    # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
+    os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
 
     cudnn.benchmark = True
 
@@ -438,7 +430,7 @@ if __name__ == '__main__':
     file_classes = []
     for fn in tqdm(all_files):
         fl = np.zeros((4,), dtype=bool)
-        msk1 = cv2.imread(fn.replace('/images/', '/masks/').replace('_pre_disaster', '_post_disaster'), cv2.IMREAD_UNCHANGED)
+        msk1 = cv2.imread(fn.replace('/images/', '/masks/').replace('_pre_disaster', '_change').replace("jpg", "png"), cv2.IMREAD_UNCHANGED)
         for c in range(1, 5):
             fl[c-1] = c in msk1
         file_classes.append(fl)
