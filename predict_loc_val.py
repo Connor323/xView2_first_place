@@ -32,11 +32,7 @@ pred_folder = 'pred_loc_val'
 train_dirs = ['train', 'tier3']
 models_folder = 'weights'
 
-all_files = []
-for d in train_dirs:
-    for f in sorted(listdir(path.join(d, 'images'))):
-        if '_pre_disaster.png' in f:
-            all_files.append(path.join(d, 'images', f))
+all_files = get_files()
 
 
 if __name__ == '__main__':
@@ -98,7 +94,7 @@ if __name__ == '__main__':
         model.eval()
         models.append(model)
 
-        snap_to_load = 'se154_loc_{}_0_best'.format(seed)
+        snap_to_load = 'se154_loc_{}_1_best'.format(seed)
 
         model = SeNet154_Unet_Loc().cuda()
         
