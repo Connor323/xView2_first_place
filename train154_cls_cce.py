@@ -422,7 +422,7 @@ if __name__ == '__main__':
 
     cudnn.benchmark = True
 
-    batch_size = 8
+    batch_size = 4
     val_batch_size = 2
 
     snapshot_name = 'se154_cls_cce_{}_1'.format(seed)
