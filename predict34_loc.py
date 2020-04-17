@@ -17,6 +17,7 @@ import pandas as pd
 from tqdm import tqdm
 import timeit
 import cv2
+from sklearn.model_selection import train_test_split
 
 from zoo.models import Res34_Unet_Loc
 
@@ -29,19 +30,23 @@ test_dir = 'test/images'
 pred_folder = 'pred34_loc'
 models_folder = 'weights'
 
+all_files = np.array(get_files())
+val_idxs = train_test_split(np.arange(len(all_files)).astype(int), test_size=0.1, random_state=0)[1]
+all_files= all_files[val_idxs] 
+
 if __name__ == '__main__':
     t0 = timeit.default_timer()
 
     makedirs(pred_folder, exist_ok=True)
     
     os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-    # os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
+    os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
 
     # cudnn.benchmark = True
 
     models = []
 
-    for seed in [0, 1, 2]:
+    for seed in [0]:
         snap_to_load = 'res34_loc_{}_1_best'.format(seed)
         model = Res34_Unet_Loc().cuda()
         model = nn.DataParallel(model).cuda()
@@ -61,10 +66,9 @@ if __name__ == '__main__':
     
 
     with torch.no_grad():
-        for f in tqdm(sorted(listdir(test_dir))):
-            if '_pre_' in f:
-                fn = path.join(test_dir, f)
-
+        for fn in tqdm(sorted(all_files)):
+            if '_pre_' in fn:
+                f = os.path.basename(fn)
                 img = cv2.imread(fn, cv2.IMREAD_COLOR)
                 img = preprocess_inputs(img)
 

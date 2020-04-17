@@ -17,6 +17,7 @@ import pandas as pd
 from tqdm import tqdm
 import timeit
 import cv2
+from sklearn.model_selection import train_test_split
 
 from zoo.models import Res34_Unet_Double
 
@@ -28,14 +29,18 @@ cv2.ocl.setUseOpenCL(False)
 test_dir = 'test/images'
 models_folder = 'weights'
 
+all_files = np.array(get_files())
+val_idxs = train_test_split(np.arange(len(all_files)).astype(int), test_size=0.1, random_state=0)[1]
+all_files= all_files[val_idxs] 
+
 if __name__ == '__main__':
     t0 = timeit.default_timer()
 
     seed = int(sys.argv[1])
-    # vis_dev = sys.argv[2]
+    vis_dev = sys.argv[2]
 
     # os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-    # os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
+    os.environ["CUDA_VISIBLE_DEVICES"] = vis_dev
 
     pred_folder = 'res34cls2_{}_tuned'.format(seed)
     makedirs(pred_folder, exist_ok=True)
@@ -44,7 +49,7 @@ if __name__ == '__main__':
 
     models = []
 
-    snap_to_load = 'res34_cls2_{}_tuned_best'.format(seed)
+    snap_to_load = 'res34_cls2_{}_0_best'.format(seed)
     model = Res34_Unet_Double().cuda()
     model = nn.DataParallel(model).cuda()
     print("=> loading checkpoint '{}'".format(snap_to_load))
@@ -63,9 +68,9 @@ if __name__ == '__main__':
     
 
     with torch.no_grad():
-        for f in tqdm(sorted(listdir(test_dir))):
-            if '_pre_' in f:
-                fn = path.join(test_dir, f)
+        for fn in tqdm(sorted(all_files)):
+            if '_pre_' in fn:
+                f = os.path.basename(fn)
 
                 img = cv2.imread(fn, cv2.IMREAD_COLOR)
                 img2 = cv2.imread(fn.replace('_pre_', '_post_'), cv2.IMREAD_COLOR)
