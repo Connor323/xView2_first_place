@@ -26,7 +26,7 @@ cv2.ocl.setUseOpenCL(False)
 
 test_dir = 'test/images'
 pred_folders = ['dpn92cls_cce_0_tuned'] + ['res34cls2_0_tuned'] + ['res50cls_cce_0_tuned'] + ['se154cls_0_tuned']
-pred_coefs = [1.0] * 12
+pred_coefs = [1.0] * 4
 loc_folders = ['pred50_loc_tuned', 'pred92_loc_tuned', 'pred34_loc', 'pred154_loc']
 loc_coefs = [1.0] * 4 
 
@@ -49,7 +49,7 @@ def process_image(f):
     _i = -1
     for d in loc_folders:
         _i += 1
-        msk = cv2.imread(path.join(d, f), cv2.IMREAD_UNCHANGED)
+        msk = cv2.imread(path.join(d, f.replace("_part1.png", ".jpg")), cv2.IMREAD_UNCHANGED)
         loc_preds.append(msk * loc_coefs[_i])
     loc_preds = np.asarray(loc_preds).astype('float').sum(axis=0) / np.sum(loc_coefs) / 255
 
